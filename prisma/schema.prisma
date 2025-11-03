@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Pedido {
+  id                    Int                @id @default(autoincrement())
+  cod_rastreio          String?
+  data_compra           DateTime
+  data_entrega          DateTime?
+  forma_de_pagamento_id Int
+  forma_de_pagamento    forma_de_pagamento @relation(fields: [forma_de_pagamento_id], references: [id], map: "Pedido_forma_de_pagamento_fkey", name: "Pedido_forma_de_pagamento")
+  status                Status             @relation(fields: [status_id], references: [id], map: "Pedido_status_fkey", name: "Pedido_status")
+  status_id             Int
+  transportadora        Transportadora     @relation(fields: [transportadora_id], references: [id], map: "Pedido_transportadora_fkey", name: "Pedido_transportadora")
+  transportadora_id     Int
+}
+
+model forma_de_pagamento {
+  id         Int       @id @default(autoincrement())
+  nome       String    @db.VarChar(255)
+  produtos   Produto[] @relation("FormaDePagamentoToProduto", map: "forma_de_pagamento_Produto_fkey")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  pedidos    Pedido[]  @relation("Pedido_forma_de_pagamento", map: "forma_de_pagamento_Pedido_fkey")
+}
+
+model Transportadora {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(255)
+  cnpj      String    @db.VarChar(14)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  pedidos   Pedido[]  @relation("Pedido_transportadora", map: "Transportadora_Pedido_fkey")
+}
+
+model Status {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  pedidos   Pedido[]  @relation("Pedido_status", map: "Status_Pedido_fkey")
+}
+
+// Include other models from your previous schema as needed
+model Usuarios {
+  id                 Int              @id @default(autoincrement())
+  nome               String           @db.VarChar(255)
+  cpf                String           @db.VarChar(255)
+  genero             String           @db.VarChar(2)
+  email              String           @unique @db.VarChar(50)
+  celular            String           @db.VarChar(50)
+  senha              String           @db.VarChar(255)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  endereco_de_entrega End_de_entrega[] @relation("UsuarioToEndDeEntrega")
+}
+
+model End_de_entrega {
+  id           Int       @id @default(autoincrement())
+  estado       String    @db.VarChar(255)
+  cidade       String    @db.VarChar(255)
+  rua          String    @db.VarChar(255)
+  cep          String    @db.VarChar(255)
+  numero       String    @db.VarChar(255)
+  complemento  String    @db.VarChar(255)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  usuarios_id  Int
+  usuario      Usuarios  @relation(fields: [usuarios_id], references: [id], map: "End_de_entrega_usuario_fkey", name: "UsuarioToEndDeEntrega")
+  produtos     Produto[] @relation("EndDeEntregaToProduto", map: "End_de_entrega_Produto_fkey")
+}
+
+model Estado {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(255)
+  produtos  Produto[] @relation("EstadoToProduto")
+}
+
+model Marca {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(255)
+  produtos  Produto[] @relation("MarcaToProduto")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Promocao {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(255)
+  inicio    DateTime  @default(now())
+  termino   DateTime
+  produtos  Produto[] @relation("PromocaoToProduto")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Produto {
+  id                    Int                @id @default(autoincrement())
+  nome                  String             @db.VarChar(255)
+  descricao             String             @db.VarChar(255)
+  avaliacao             Decimal            @db.Decimal(10,2)
+  tamanho               String             @db.VarChar(20)
+  cor                   String             @db.VarChar(20)
+  preco                 Decimal            @db.Decimal(10,2)
+  genero                String             @db.VarChar(2)
+  imagem                String             @db.VarChar(255)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  categoria_id          Int
+  categoria             Categoria          @relation(fields: [categoria_id], references: [id], map: "Produto_categoria_fkey", name: "CategoriaToProduto")
+  estado_id             Int
+  estado                Estado             @relation(fields: [estado_id], references: [id], map: "Produto_estado_fkey", name: "EstadoToProduto")
+  marca_id              Int
+  marca                 Marca              @relation(fields: [marca_id], references: [id], map: "Produto_marca_fkey", name: "MarcaToProduto")
+  promocao_id           Int?
+  promocao              Promocao?           @relation(fields: [promocao_id], references: [id], map: "Produto_promocao_fkey", name: "PromocaoToProduto")
+  estoque_id            Int
+  estoque               Estoque            @relation(fields: [estoque_id], references: [id], map: "Produto_estoque_fkey", name: "EstoqueToProduto")
+  forma_de_pagamento    forma_de_pagamento @relation(fields: [forma_de_pagamento_id], references: [id], map: "Produto_forma_de_pagamento_fkey", name: "FormaDePagamentoToProduto")
+  forma_de_pagamento_id Int
+  end_de_entrega        End_de_entrega     @relation(fields: [end_de_entrega_id], references: [id], map: "Produto_end_de_entrega_fkey", name: "EndDeEntregaToProduto")
+  end_de_entrega_id     Int
+  @@index([categoria_id])
+  @@index([marca_id])
+  @@index([genero])
+  @@index([preco])
+  @@index([createdAt])
+}
+
+model Estoque {
+  id        Int       @id @default(autoincrement())
+  produtos  Produto[] @relation("EstoqueToProduto")
+  quantidade Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Categoria {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(255)
+  produtos  Produto[] @relation("CategoriaToProduto")
+}
