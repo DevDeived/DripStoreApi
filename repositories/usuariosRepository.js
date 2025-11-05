@@ -1,52 +1,45 @@
-import prisma from "../config/prisma.js"
+import prisma from "../config/prisma.js";
 
-export const index = async() => {
-    let results = await prisma.usuarios.findMany()
-    return results
-}
+export const create = async (usuarioData, enderecoData, senha) => {
+  return await prisma.usuarios.create({
+    data: {
+      ...usuarioData,
+      senha,
+      endereco_de_entrega: {
+        create: {
+          ...enderecoData,
+        },
+      },
+    },
+    include: {
+      endereco_de_entrega: true,
+    },
+  });
+};
 
-export const find = async(id) => {
-    let results = await prisma.usuarios.findUnique(
-        {
-            where: {id:Number(id)}
-        }
-    )
-    return results
-}
+export const update = async (id, usuarioData, enderecoData, senha) => {
+  return await prisma.usuarios.update({
+    where: { id: Number(id) },
+    data: {
+      ...usuarioData,
+      ...(senha && { senha }),
+      endereco_de_entrega: {
+        updateMany: {
+          data: { ...enderecoData },
+        },
+      },
+    },
+    include: { endereco_de_entrega: true },
+  });
+};
 
-export const findByEmail = async(email) => {
-    let results = await prisma.usuarios.findUnique(
-        {
-            where: {email:email}
-        }
-    )
-    return results
-}
+export const index = async () => await prisma.usuarios.findMany({ include: { endereco_de_entrega: true } });
 
-export const create = async(nome,cpf,genero,email,celular,senha) => {
-    let results = await prisma.usuarios.create(
-        {
-            data: {nome,cpf,genero,email,celular,senha}
-        }
-    )
-    return results
-}
+export const find = async (id) =>
+  await prisma.usuarios.findUnique({ where: { id: Number(id) }, include: { endereco_de_entrega: true } });
 
-export const destroy = async(id) => {
-    let results = await prisma.usuarios.delete(
-        {
-            where: {id:Number(id)}
-        }
-    )
-    return results
-}
+export const destroy = async (id) =>
+  await prisma.usuarios.delete({ where: { id: Number(id) } });
 
-export const update = async(id,nome,cpf,genero,email,celular,senha) => {
-    let results = await prisma.usuarios.update(
-        {
-            where: {id:Number(id)},
-            data: {nome,cpf,genero,email,celular,senha}
-        }
-    )
-    return results
-}
+export const findByEmail = async (email) =>
+  await prisma.usuarios.findUnique({ where: { email }, include: { endereco_de_entrega: true } });
